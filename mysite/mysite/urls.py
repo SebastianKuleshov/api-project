@@ -21,7 +21,7 @@ from account.views import AccountAPIList, AccountAPIUpdate, AccountAPIDestroy
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('account/', include('account.urls')),
+    path('', include('account.urls')),
     path('auth/', include('user_auth.urls')),
     path('api/v1/account/', AccountAPIList.as_view()),
     path('api/v1/account/<int:pk>/', AccountAPIUpdate.as_view()),
