@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, IsAuthenticatedOrReadOnly
 from .serializers import AccountSerializer
 from .models import Account
 from .permissions import IsOwnerOrAdmin
@@ -16,6 +16,7 @@ def index(request):
 class AccountAPIList(generics.ListCreateAPIView):
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+    permission_classes = (IsAuthenticated,)
 
 class AccountAPIUpdate(generics.RetrieveUpdateAPIView):
     queryset = Account.objects.all()
