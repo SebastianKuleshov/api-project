@@ -27,6 +27,7 @@ def confirm_page(request):
     if request.user.is_authenticated:
         return redirect("account:index")
     form = ConfirmForm()
+    context = {'form': form}
     if request.method == 'POST':
         form = ConfirmForm(request.POST)
         if form.is_valid():
@@ -34,6 +35,8 @@ def confirm_page(request):
             registration_data = request.session.get('registration_data')
             if registration_data:
                 email = registration_data['email']
+                context['form'] = form
+                context['error'] = 'Invalid OTP code'
                 if verify_otp(email, otp_code):                    
                     User = get_user_model()
                     new_user = User.objects.create_user(
@@ -45,7 +48,7 @@ def confirm_page(request):
                     del request.session['registration_data']
                     return redirect("account:index")
         
-    return render(request, 'user_auth/confirm.html', context={'form': form})
+    return render(request, 'user_auth/confirm.html', context=context)
 
 def login_page(request):
     if request.user.is_authenticated:

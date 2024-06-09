@@ -37,7 +37,7 @@ def generate_otp(email):
     return otp
 
 def verify_otp(email, otp_code):
-    otp = OTP.objects.get(email=email, otp_code=otp_code)
+    otp = OTP.objects.filter(email=email, otp_code=otp_code).last()
     if otp and otp.is_valid():
         otp.used = True
         otp.save()
