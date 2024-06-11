@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import PostAPIList, PostAPIUpdateDelete
+from .views import PostAPI, PostAPIList
 
 app_name = 'post'
 
 urlpatterns = [
     path('', PostAPIList.as_view(), name='post_list'),
-    path('<int:pk>/', PostAPIUpdateDelete.as_view(), name='post_update_delete'),
+    path('<int:pk>/', PostAPI.as_view(), name='post_update_delete'),
 ]
