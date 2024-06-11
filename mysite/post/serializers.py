@@ -1,13 +1,13 @@
 from rest_framework import serializers
-from .models import Account
+from .models import Post
 
-class AccountSerializer(serializers.ModelSerializer):
+class PostSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     def update(self, instance, validated_data):
-            validated_data.pop('user')
-            return super().update(instance, validated_data)
+        validated_data.pop('user')
+        return super().update(instance, validated_data)
     
     class Meta:
-        model = Account
+        model = Post
         fields = '__all__'

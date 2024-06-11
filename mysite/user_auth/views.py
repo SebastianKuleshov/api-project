@@ -2,74 +2,72 @@ from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from .forms import UserRegisterForm, UserLoginForm, ConfirmForm
+from rest_framework.permissions import IsAuthenticated
 from .models import generate_otp, verify_otp
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from .serializers import RegisterUserSerializer, LoginUserSerializer, ConfirmOTPSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from drf_yasg.utils import swagger_auto_schema
 
 # Create your views here.
 
-def register_page(request):
-    if request.user.is_authenticated:
-        return redirect("account:index")
-    form = UserRegisterForm()
 
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            # form.save()
-            if generate_otp(form.cleaned_data['email']):
-                request.session['registration_data'] = form.cleaned_data
-            # login(request, form.instance)
-            return redirect("user_auth:confirm")         
-        
+class RegisterAPIView(APIView):
+    serializer_class = RegisterUserSerializer
 
-    return render(request, 'user_auth/register.html', {'form': form})
+    @swagger_auto_schema(
+        request_body=RegisterUserSerializer,
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-def confirm_page(request):
-    if request.user.is_authenticated:
-        return redirect("account:index")
-    form = ConfirmForm()
-    context = {'form': form}
-    if request.method == 'POST':
-        form = ConfirmForm(request.POST)
-        if form.is_valid():
-            otp_code = form.cleaned_data['otp_code']
-            registration_data = request.session.get('registration_data')
-            if registration_data:
-                email = registration_data['email']
-                context['form'] = form
-                context['error'] = 'Invalid OTP code'
-                if verify_otp(email, otp_code):                    
-                    User = get_user_model()
-                    new_user = User.objects.create_user(
-                        username=registration_data['username'],
-                        email=registration_data['email'],
-                        password=registration_data['password1']
-                    )
-                    login(request, new_user)
-                    del request.session['registration_data']
-                    return redirect("account:index")
-        
-    return render(request, 'user_auth/confirm.html', context=context)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-def login_page(request):
-    if request.user.is_authenticated:
-        return redirect("account:index")
-    form = UserLoginForm()
-    context = {'form': form}
-    if request.method == 'POST':
-        form = UserLoginForm(request.POST)
 
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        
-        context['form'] = form
-        context['error'] = 'Invalid username or password'
-        if user is not None:
-            login(request, user)
-            return redirect("account:index")
-            
-    return render(request, 'user_auth/login.html', context=context)
+class ConfirmOTPAPIView(APIView):
+    serializer_class = ConfirmOTPSerializer
 
-def logout_page(request):
-    logout(request)
-    return redirect("account:index") 
+    @swagger_auto_schema(
+        request_body=ConfirmOTPSerializer,
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "user": serializer.to_representation(user),
+            "refresh": str(refresh),
+            "access": str(refresh.access_token)
+            }, status=status.HTTP_201_CREATED)
+
+
+class LoginAPIView(APIView):
+    serializer_class = LoginUserSerializer
+
+    @swagger_auto_schema(
+        request_body=LoginUserSerializer,
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            user = serializer.validated_data
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "user": serializer.data,
+                "refresh": str(refresh),
+                "access": str(refresh.access_token)
+                }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        logout(request)
+        return Response(status=status.HTTP_200_OK)
