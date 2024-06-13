@@ -10,18 +10,23 @@ from post.permissions import IsOwnerOrAdmin
 
 # Create your views here.
 
+
 class UserAPIView(APIView):
     serializer_class = UserSerializer
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         user = request.user
-        return Response({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "login_confirm": user.login_confirm,
-        }, status=status.HTTP_200_OK)
-    
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "login_confirm": user.login_confirm,
+            },
+            status=status.HTTP_200_OK,
+        )
+
     @swagger_auto_schema(
         request_body=UserSerializer,
     )
@@ -30,10 +35,13 @@ class UserAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
 
 class RegisterAPIView(APIView):
     serializer_class = RegisterUserSerializer
+
+    def get(self, request):
+        return Response(status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         request_body=RegisterUserSerializer,
@@ -46,26 +54,11 @@ class RegisterAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ConfirmOTPAPIView(APIView):
-    serializer_class = ConfirmOTPSerializer
-
-    @swagger_auto_schema(
-        request_body=ConfirmOTPSerializer,
-    )
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            "user": serializer.to_representation(user),
-            "refresh": str(refresh),
-            "access": str(refresh.access_token)
-            }, status=status.HTTP_201_CREATED)
-
-
 class LoginAPIView(APIView):
     serializer_class = LoginUserSerializer
+
+    def get(self, request):
+        return Response(status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         request_body=LoginUserSerializer,
@@ -75,15 +68,40 @@ class LoginAPIView(APIView):
         if serializer.is_valid():
             validated_data = serializer.validated_data
             if validated_data.get("otp_required"):
-                return Response({"message": "OTP code sent", "user_id": validated_data["user_id"]}, status=status.HTTP_200_OK)
-            user = validated_data['user']
+                return Response(
+                    {"message": "OTP code sent", "user_id": validated_data["user_id"]}, status=status.HTTP_200_OK
+                )
+            user = validated_data["user"]
             refresh = RefreshToken.for_user(user)
-            return Response({
-                "user": serializer.to_representation(user),
-                "refresh": str(refresh),
-                "access": str(refresh.access_token)
-                }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "user": serializer.to_representation(user),
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                },
+                status=status.HTTP_200_OK,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ConfirmOTPAPIView(APIView):
+    serializer_class = ConfirmOTPSerializer
+
+    def get(self, request):
+        return Response(status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        request_body=ConfirmOTPSerializer,
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {"user": serializer.to_representation(user), "refresh": str(refresh), "access": str(refresh.access_token)},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class LogoutAPIView(APIView):

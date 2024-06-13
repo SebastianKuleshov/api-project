@@ -1,51 +1,40 @@
 from django.db import models
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
 
 from datetime import timedelta
-import random
 
 # Create your models here.
 
 
-class CustomUser(AbstractUser):
+class CustomUser(AbstractUser, PermissionsMixin):
+    username = models.CharField(max_length=150, unique=True, null=True)
+    email = models.EmailField(unique=True, null=True)
+    phone = models.CharField(max_length=20, unique=True, null=True)
     login_confirm = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.email if self.email else self.phone
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_email_or_phone",
+                check=(
+                    models.Q(email__isnull=True, phone__isnull=False)
+                    | models.Q(email__isnull=False, phone__isnull=True)
+                    | models.Q(email__isnull=False, phone__isnull=False)
+                ),
+            )
+        ]
 
 
 class OTP(models.Model):
     otp_code = models.CharField(max_length=6)
-    email = models.EmailField()
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
     used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def is_valid(self):
         return timezone.now() - self.created_at < timedelta(minutes=5)
-
-
-def generate_otp(email):
-    otp = OTP.objects.filter(email=email).last()
-    if otp and otp.is_valid() and otp.used == False:
-        return False
-
-    otp_code = "".join([str(random.randint(0, 9)) for _ in range(6)])
-    otp = OTP.objects.create(otp_code=otp_code, email=email)
-    send_mail(
-        "Your OTP code",
-        f"Your OTP code is {otp_code}",
-        settings.EMAIL_HOST_USER,
-        [email],
-        fail_silently=False,
-    )
-
-    return otp
-
-
-def verify_otp(email, otp_code):
-    otp = OTP.objects.filter(email=email, otp_code=otp_code).last()
-    if otp and otp.is_valid():
-        otp.used = True
-        otp.save()
-        return True
-    return False

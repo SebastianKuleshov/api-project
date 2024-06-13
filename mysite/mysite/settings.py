@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure--nv=b!cwn4(3+j_j2ive=n&*h+o9-k$3m16th6e!=mt%wpxiio
 DEBUG = True
 
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -38,7 +38,6 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-
 ALLOWED_HOSTS = []
 
 
@@ -142,6 +141,8 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'user_auth.CustomUser'
+AUTHENTICATION_BACKENDS = ['user_auth.authencitation.EmailBackend']
+
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
@@ -189,6 +190,13 @@ SIMPLE_JWT = {
 }
 
 SWAGGER_SETTINGS = {
-    "LOGIN_URL": "user_auth:login",
-    "LOGOUT_URL": "user_auth:logout",
+    "USE_SESSION_AUTH": False,
+    "REFETCH_SCHEMA_WITH_AUTH": True,
+    "SECURITY_DEFINITIONS": {
+        'api_key': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    }
 }
