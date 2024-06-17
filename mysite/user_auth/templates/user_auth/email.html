@@ -104,17 +104,21 @@
               {% endif %}
             </p>
             <p
-              style="
-                margin: 0;
-                margin-top: 60px;
-                font-size: 40px;
-                font-weight: 600;
-                letter-spacing: 25px;
-                color: #ba3d4f;
-              "
-            >
-              {{ otp_code}}
-            </p>
+            style="
+              margin: 0;
+              margin-top: 60px;
+              font-size: 40px;
+              font-weight: 600;
+              letter-spacing: 25px;
+              color: #ba3d4f;
+            "
+          >
+            {% if otp_method == 'code' %}
+              {{ otp_code }}
+            {% else %}
+              <a href="{{ otp_code }}" style="color: #ba3d4f; text-decoration: none;">Activate Account</a>
+            {% endif %}
+          </p>
           </div>
         </div>
 

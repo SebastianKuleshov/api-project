@@ -30,7 +30,7 @@ class CustomUser(AbstractUser, PermissionsMixin):
 
 
 class OTP(models.Model):
-    otp_code = models.CharField(max_length=6)
+    otp_code = models.CharField(max_length=20)
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
     used = models.BooleanField(default=False)

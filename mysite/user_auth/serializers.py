@@ -23,8 +23,10 @@ class UserSerializer(serializers.Serializer):
 class RegisterUserSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False, validators=[UniqueValidator(queryset=User.objects.all())])
     phone = serializers.CharField(max_length=20, required=False, validators=[UniqueValidator(queryset=User.objects.all())])
-    antifishing_phrase = serializers.CharField(max_length=100, required=False)
     password = serializers.CharField(max_length=100)
+    antifishing_phrase = serializers.CharField(max_length=100, required=False)
+    otp_method = serializers.ChoiceField(choices=[('code', 'Code'), ('link', 'Link')], default='code')
+    resend = serializers.BooleanField(default=False)
 
     def validate(self, data):
         if not data.get('email') and not data.get('phone'):
@@ -36,7 +38,10 @@ class RegisterUserSerializer(serializers.Serializer):
         email = validated_data.get('email', None)
         phone = validated_data.get('phone', None)
         antifishing_phrase = validated_data.get('antifishing_phrase', None)
-        generate_otp(email=email, phone=phone, antifishing_phrase=antifishing_phrase)    
+        otp_method = validated_data.get('otp_method', 'code')
+        resend = validated_data.get('resend', False)
+        url = self.context['request'].build_absolute_uri('/activate')
+        generate_otp(email=email, phone=phone, antifishing_phrase=antifishing_phrase, otp_method=otp_method, url=url, resend=resend)
         
         return validated_data
 

@@ -40,9 +40,6 @@ class UserAPIView(APIView):
 class RegisterAPIView(APIView):
     serializer_class = RegisterUserSerializer
 
-    def get(self, request):
-        return Response(status=status.HTTP_200_OK)
-
     @swagger_auto_schema(
         request_body=RegisterUserSerializer,
     )
@@ -86,9 +83,6 @@ class LoginAPIView(APIView):
 
 class ConfirmOTPAPIView(APIView):
     serializer_class = ConfirmOTPSerializer
-
-    def get(self, request):
-        return Response(status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         request_body=ConfirmOTPSerializer,
