@@ -17,7 +17,7 @@ def index(request):
 
 class PostAPIList(APIView):
     serializer_class = PostSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsOwnerOrAdmin,)
 
     def get(self, request):
         queryset = Post.objects.all()
@@ -60,6 +60,8 @@ class PostAPI(APIView):
             post = Post.objects.get(pk=pk)
         except Post.DoesNotExist:
             return Response({"error": "Post not found"}, status=404)
+        
+        self.check_object_permissions(request, post)
         serializer = self.serializer_class(instance=post, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -76,6 +78,8 @@ class PostAPI(APIView):
             post = Post.objects.get(pk=pk)
         except Post.DoesNotExist:
             return Response({"error": "Post not found"}, status=404)
+        
+        self.check_object_permissions(request, post)
         post.delete()
         return Response({"message": "Post deleted successfully"})
 

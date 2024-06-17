@@ -1,20 +1,20 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
+from rest_framework.permissions import IsAuthenticated
+from .serializers import BlogSerializer
+from .models import Blog
+from post.permissions import IsOwnerOrAdmin
+
 
 # Create your views here.
 
-class BlogViewSet(viewsets.ViewSet):
-    def list(self, request):
-        pass
+class BlogAPIList(generics.ListCreateAPIView):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer
+    permission_classes = (IsAuthenticated,)
 
-    def create(self, request):
-        pass
 
-    def retrieve(self, request, pk=None):
-        pass
-
-    def partial_update(self, request, pk=None):
-        pass
-
-    def destroy(self, request, pk=None):
-        pass    
+class BlogAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer
+    permission_classes = (IsOwnerOrAdmin,)
